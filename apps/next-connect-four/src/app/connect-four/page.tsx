@@ -254,7 +254,7 @@ export default async function ConnectFourGame(props: {
         </div>
       )}
       <small>
-        Page constructed in {(performance.now() - timeStart, 2).toFixed(0)}ms
+        Page constructed in {(performance.now() - timeStart).toFixed(0)}ms
       </small>
       <small>Computer move calculated in {computerMoveTime.toFixed(0)}ms</small>
 
