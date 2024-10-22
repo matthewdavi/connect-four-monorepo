@@ -301,4 +301,4 @@ async function ConnectFourGame(props: {
 
 export { ConnectFourGame as default };
 
-export const runtime = "node";
+export const runtime = "nodejs";
