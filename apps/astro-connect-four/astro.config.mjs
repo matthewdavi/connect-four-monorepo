@@ -4,6 +4,8 @@ import tailwind from "@astrojs/tailwind";
 import { fileURLToPath } from "url";
 import path from "path";
 
+import vercel from "@astrojs/vercel/serverless";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -11,6 +13,7 @@ const __dirname = path.dirname(__filename);
 export default defineConfig({
   integrations: [tailwind()],
   output: "server",
+
   vite: {
     build: {
       target: "esnext",
@@ -43,4 +46,6 @@ export default defineConfig({
       },
     ],
   },
+
+  adapter: vercel(),
 });

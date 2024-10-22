@@ -28,9 +28,7 @@ const ExtendedGameStateSchema = GameStateSchema.extend({
   minimaxQuality: z.enum(["bad", "medium", "best"]),
 });
 
-export function convertWasmStateToTypescriptState(
-  wasmState: ExtendedGameState,
-) {
+function convertWasmStateToTypescriptState(wasmState: ExtendedGameState) {
   return {
     board: wasmState.board.map((column) =>
       column.map((cell) =>

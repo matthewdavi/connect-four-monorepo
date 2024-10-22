@@ -12,6 +12,7 @@
   "dependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/tailwind": "^5.1.2",
+    "@astrojs/vercel": "^7.8.2",
     "@types/lodash": "^4.17.12",
     "@types/lodash-es": "^4.17.12",
     "astro": "^4.16.6",
