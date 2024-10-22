@@ -255,6 +255,10 @@ export default async function ConnectFourGame(props: {
       )}
       <small>Page constructed in {Date.now() - timeStart}ms</small>
       <small>Computer move calculated in {computerMoveTime}ms</small>
+      <div>
+        Now: {Date.now()} <br />
+        Started: {timeStart}
+      </div>
       <div className="mt-4">
         <span className="mr-2">CPU Quality:</span>
         {renderQualityLink("bad")}
