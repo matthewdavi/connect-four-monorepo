@@ -283,9 +283,9 @@ async function ConnectFourGame(props: {
         </div>
       )}
       <small>
-        Page constructed in {(performance.now() - timeStart).toFixed(0)}ms
+        Page constructed in {(performance.now() - timeStart).toFixed(3)}ms
       </small>
-      <small>Computer move calculated in {computerMoveTime.toFixed(0)}ms</small>
+      <small>Computer move calculated in {computerMoveTime.toFixed(3)}ms</small>
       <small>Wasm load time: {wasmLoadTime}ms</small>
       <div className="mt-4">
         <span className="mr-2">CPU Quality:</span>
