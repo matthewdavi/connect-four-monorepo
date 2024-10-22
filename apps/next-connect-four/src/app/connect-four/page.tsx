@@ -275,4 +275,4 @@ export default async function ConnectFourGame(props: {
   );
 }
 
-export const runtime = "edge";
+export const runtime = "nodejs";
