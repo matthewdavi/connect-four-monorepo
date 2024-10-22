@@ -48,7 +48,7 @@ function convertTsToWasmGameState(tsState: ExtendedGameState) {
 export default async function ConnectFourGame(props: {
   searchParams: Promise<{ state?: string }>;
 }) {
-  const timeStart = Date.now();
+  const timeStart = performance.now();
   const searchParams = await props.searchParams;
   const initialState: ExtendedGameState = {
     ...ConnectFour.createInitialState(),
@@ -76,12 +76,12 @@ export default async function ConnectFourGame(props: {
   // Compute the computer's move if it's the computer's turn
   let computerMoveTime = 0;
   if (!gameState.isGameOver && gameState.currentPlayer === "yellow") {
-    const computerMoveStart = Date.now();
+    const computerMoveStart = performance.now();
     const computerMove = ConnectFour.getComputerMove(
       gameState,
       gameState.minimaxQuality,
     );
-    computerMoveTime = Date.now() - computerMoveStart;
+    computerMoveTime = performance.now() - computerMoveStart;
     const computerState: GameState = ConnectFour.placePiece(
       gameState,
       computerMove,
@@ -253,12 +253,11 @@ export default async function ConnectFourGame(props: {
           Current player: {currentPlayer.toUpperCase()}
         </div>
       )}
-      <small>Page constructed in {Date.now() - timeStart}ms</small>
-      <small>Computer move calculated in {computerMoveTime}ms</small>
-      <div>
-        Now: {Date.now()} <br />
-        Started: {timeStart}
-      </div>
+      <small>
+        Page constructed in {(performance.now() - timeStart, 2).toFixed(0)}ms
+      </small>
+      <small>Computer move calculated in {computerMoveTime.toFixed(0)}ms</small>
+
       <div className="mt-4">
         <span className="mr-2">CPU Quality:</span>
         {renderQualityLink("bad")}

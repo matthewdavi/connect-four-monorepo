@@ -9,6 +9,7 @@ import JSONCrush from "jsoncrush";
 import { z } from "zod";
 import { memoize } from "lodash-es";
 import { headers } from "next/headers";
+import { cache } from "react";
 
 const CellSchema = z.union([
   z.literal("Empty"),
@@ -48,15 +49,16 @@ function convertWasmStateToTypescriptState(wasmState: ExtendedGameState) {
 
 type ExtendedGameState = z.infer<typeof ExtendedGameStateSchema>;
 
-const getConnectFour = async (baseUrl: string) => {
+const getConnectFour = cache(async (baseUrl: string) => {
   await ConnectFourWasm.init(baseUrl);
+
   return ConnectFourWasm;
-};
+});
 
 async function ConnectFourGame(props: {
   searchParams: Promise<{ state?: string }>;
 }) {
-  const timeStart = Date.now();
+  const timeStart = performance.now();
 
   const searchParams = await props.searchParams;
 
@@ -65,7 +67,9 @@ async function ConnectFourGame(props: {
   const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
   const baseUrl = `${protocol}://${host}`;
 
+  const startLoadingWasm = performance.now();
   const connectFour = await getConnectFour(baseUrl);
+  const wasmLoadTime = (performance.now() - startLoadingWasm).toFixed(2);
 
   if (!connectFour) {
     throw new Error("ConnectFourWasm module not initialized");
@@ -98,12 +102,12 @@ async function ConnectFourGame(props: {
   let computerMoveTime = 0;
   // Compute the computer's move if it's the computer's turn
   if (!gameState.is_game_over && gameState.current_player === "Yellow") {
-    const startComputerMove = Date.now();
+    const startComputerMove = performance.now();
     const computerMove = connectFour.get_computer_move(
       gameState,
       gameState.minimaxQuality,
     );
-    computerMoveTime = Date.now() - startComputerMove;
+    computerMoveTime = performance.now() - startComputerMove;
 
     const computerState = connectFour.place_piece(gameState, computerMove);
     console.timeEnd("RUST place piece");
@@ -278,8 +282,11 @@ async function ConnectFourGame(props: {
           Current player: {current_player.toUpperCase()}
         </div>
       )}
-      <small>Page constructed in {Date.now() - timeStart}ms</small>
-      <small>Computer move calculated in {computerMoveTime}ms</small>
+      <small>
+        Page constructed in {(performance.now() - timeStart).toFixed(0)}ms
+      </small>
+      <small>Computer move calculated in {computerMoveTime.toFixed(0)}ms</small>
+      <small>Wasm load time: {wasmLoadTime}</small>
       <div className="mt-4">
         <span className="mr-2">CPU Quality:</span>
         {renderQualityLink("bad")}
