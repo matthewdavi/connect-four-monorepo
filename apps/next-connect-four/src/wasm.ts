@@ -10,9 +10,8 @@ import initWasm, {
 // @ts-ignore
 import wasmModule from "./wasm-build/connect_four_wasm_bg.wasm?module";
 
-export const config = {
-  runtime: "edge",
-};
+export const runtime = "edge";
+
 export type GameStateJS = any;
 
 export class ConnectFourWasm {

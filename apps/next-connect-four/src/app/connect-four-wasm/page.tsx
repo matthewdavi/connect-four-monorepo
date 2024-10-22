@@ -31,21 +31,15 @@ const ExtendedGameStateSchema = GameStateSchema.extend({
 
 async function getEdgeSafeTime() {
   try {
-    // Generate a random number between 0 and 999999
-    const randomNumber = Math.floor(Math.random() * 1000000);
-    // Convert the number to a string and encode it as base64
-    const base64Data = btoa(randomNumber.toString());
-    // Create a data URL with the base64 encoded number
-    const dataUrl = `data:text/plain;base64,${base64Data}`;
+    const time = Date.now();
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
 
-    // Fetch the data URL
-    const response = await fetch(dataUrl);
+    const response = await fetch(`${baseUrl}/api/time`);
     await response.text();
 
-    // Decode the base64 string and parse it as a number
-
-    // Use the fetched number to offset the current time
-    return Date.now();
+    return time;
   } catch (error) {
     console.error("Error in getEdgeSafeTime:", error);
     return Date.now();
