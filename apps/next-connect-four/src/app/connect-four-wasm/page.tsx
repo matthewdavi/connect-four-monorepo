@@ -30,11 +30,26 @@ const ExtendedGameStateSchema = GameStateSchema.extend({
 });
 
 async function getEdgeSafeTime() {
-  // Perform a no-op fetch using a data URL to trigger a time update
-  await fetch("data:,", { method: "HEAD" });
+  try {
+    // Generate a random number between 0 and 999999
+    const randomNumber = Math.floor(Math.random() * 1000000);
+    // Convert the number to a string and encode it as base64
+    const base64Data = btoa(randomNumber.toString());
+    // Create a data URL with the base64 encoded number
+    const dataUrl = `data:text/plain;base64,${base64Data}`;
 
-  // Return the updated time
-  return Date.now();
+    // Fetch the data URL
+    const response = await fetch(dataUrl);
+    await response.text();
+
+    // Decode the base64 string and parse it as a number
+
+    // Use the fetched number to offset the current time
+    return Date.now();
+  } catch (error) {
+    console.error("Error in getEdgeSafeTime:", error);
+    return Date.now();
+  }
 }
 
 function convertWasmStateToTypescriptState(wasmState: ExtendedGameState) {
