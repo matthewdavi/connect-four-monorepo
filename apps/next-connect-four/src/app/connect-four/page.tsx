@@ -23,7 +23,14 @@ async function getEdgeSafeTime() {
       ? `https://${process.env.VERCEL_URL}`
       : "http://localhost:3000";
 
-    const response = await fetch(`${baseUrl}/api/time`);
+    const response = await fetch(`${baseUrl}/api/time?time=${time}`, {
+      cache: "no-store",
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
     await response.text();
 
     return time;
