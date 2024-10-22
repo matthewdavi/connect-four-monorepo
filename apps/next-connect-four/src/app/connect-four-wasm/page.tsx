@@ -29,6 +29,14 @@ const ExtendedGameStateSchema = GameStateSchema.extend({
   minimaxQuality: z.enum(["bad", "medium", "best"]),
 });
 
+async function getEdgeSafeTime() {
+  // Perform a no-op fetch using a data URL to trigger a time update
+  await fetch("data:,", { method: "HEAD" });
+
+  // Return the updated time
+  return Date.now();
+}
+
 function convertWasmStateToTypescriptState(wasmState: ExtendedGameState) {
   return {
     board: wasmState.board.map((column) =>
@@ -58,7 +66,7 @@ const getConnectFour = cache(async (baseUrl: string) => {
 async function ConnectFourGame(props: {
   searchParams: Promise<{ state?: string }>;
 }) {
-  const timeStart = performance.now();
+  const timeStart = await getEdgeSafeTime();
 
   const searchParams = await props.searchParams;
 
@@ -67,9 +75,11 @@ async function ConnectFourGame(props: {
   const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
   const baseUrl = `${protocol}://${host}`;
 
-  const startLoadingWasm = performance.now();
+  const startLoadingWasm = await getEdgeSafeTime();
   const connectFour = await getConnectFour(baseUrl);
-  const wasmLoadTime = (performance.now() - startLoadingWasm).toFixed(2);
+  const wasmLoadTime = ((await getEdgeSafeTime()) - startLoadingWasm).toFixed(
+    2,
+  );
 
   if (!connectFour) {
     throw new Error("ConnectFourWasm module not initialized");
@@ -102,15 +112,14 @@ async function ConnectFourGame(props: {
   let computerMoveTime = 0;
   // Compute the computer's move if it's the computer's turn
   if (!gameState.is_game_over && gameState.current_player === "Yellow") {
-    const startComputerMove = performance.now();
+    const startComputerMove = await getEdgeSafeTime();
     const computerMove = connectFour.get_computer_move(
       gameState,
       gameState.minimaxQuality,
     );
-    computerMoveTime = performance.now() - startComputerMove;
+    computerMoveTime = (await getEdgeSafeTime()) - startComputerMove;
 
     const computerState = connectFour.place_piece(gameState, computerMove);
-    console.timeEnd("RUST place piece");
     gameState = {
       ...computerState,
       newestPieceColumn: gameState.newestPieceColumn,
@@ -256,6 +265,9 @@ async function ConnectFourGame(props: {
     );
   }
 
+  const endTime = await getEdgeSafeTime();
+  const totalTime = endTime - timeStart;
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100">
       <h1 className="mb-8 text-4xl font-bold">Connect Four (WASM)</h1>
@@ -282,10 +294,8 @@ async function ConnectFourGame(props: {
           Current player: {current_player.toUpperCase()}
         </div>
       )}
-      <small>
-        Page constructed in {(performance.now() - timeStart).toFixed(3)}ms
-      </small>
-      <small>Computer move calculated in {computerMoveTime.toFixed(3)}ms</small>
+      <small>Page constructed in {totalTime.toFixed(0)}ms</small>
+      <small>Computer move calculated in {computerMoveTime.toFixed(0)}ms</small>
       <small>Wasm load time: {wasmLoadTime}ms</small>
       <div className="mt-4">
         <span className="mr-2">CPU Quality:</span>
@@ -306,4 +316,4 @@ async function ConnectFourGame(props: {
 
 export { ConnectFourGame as default };
 
-export const runtime = "nodejs";
+export const runtime = "edge";

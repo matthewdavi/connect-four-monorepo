@@ -1,11 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable */
+import "server-only";
 import initWasm, {
   ConnectFour,
   InitInput,
   type InitOutput,
 } from "./wasm-build/connect_four_wasm";
+// Import the wasm file directly
+// @ts-ignore
+import wasmModule from "./wasm-build/connect_four_wasm_bg.wasm?module";
 
+export const config = {
+  runtime: "edge",
+};
 export type GameStateJS = any;
 
 export class ConnectFourWasm {
@@ -18,16 +25,9 @@ export class ConnectFourWasm {
   public static async init(baseUrl: string): Promise<ConnectFourWasm> {
     if (!ConnectFourWasm.instance) {
       ConnectFourWasm.instance = new ConnectFourWasm();
-      const wasmModule = await ConnectFourWasm.loadWasmModule(baseUrl);
       await ConnectFourWasm.instance.initializeWasm(wasmModule);
     }
     return ConnectFourWasm.instance;
-  }
-
-  private static async loadWasmModule(baseUrl: string): Promise<InitInput> {
-    const response = await fetch(`${baseUrl}/connect_four_wasm_bg.wasm`);
-    const arrayBuffer = await response.arrayBuffer();
-    return new Uint8Array(arrayBuffer);
   }
 
   private async initializeWasm(input: InitInput): Promise<void> {

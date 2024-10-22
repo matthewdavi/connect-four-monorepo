@@ -16,6 +16,14 @@ const ExtendedGameStateSchema = GameStateSchema.extend({
   minimaxQuality: QualitySchema,
 });
 
+async function getEdgeSafeTime() {
+  // Perform a no-op fetch using a data URL to trigger a time update
+  await fetch("data:,", { method: "HEAD" });
+
+  // Return the updated time
+  return Date.now();
+}
+
 type ExtendedGameState = z.infer<typeof ExtendedGameStateSchema>;
 
 function convertTsToWasmGameState(tsState: ExtendedGameState) {
@@ -48,7 +56,7 @@ function convertTsToWasmGameState(tsState: ExtendedGameState) {
 export default async function ConnectFourGame(props: {
   searchParams: Promise<{ state?: string }>;
 }) {
-  const timeStart = performance.now();
+  const timeStart = await getEdgeSafeTime();
   const searchParams = await props.searchParams;
   const initialState: ExtendedGameState = {
     ...ConnectFour.createInitialState(),
@@ -76,12 +84,12 @@ export default async function ConnectFourGame(props: {
   // Compute the computer's move if it's the computer's turn
   let computerMoveTime = 0;
   if (!gameState.isGameOver && gameState.currentPlayer === "yellow") {
-    const computerMoveStart = performance.now();
+    const computerMoveStart = await getEdgeSafeTime();
     const computerMove = ConnectFour.getComputerMove(
       gameState,
       gameState.minimaxQuality,
     );
-    computerMoveTime = performance.now() - computerMoveStart;
+    computerMoveTime = (await getEdgeSafeTime()) - computerMoveStart;
     const computerState: GameState = ConnectFour.placePiece(
       gameState,
       computerMove,
@@ -254,9 +262,10 @@ export default async function ConnectFourGame(props: {
         </div>
       )}
       <small>
-        Page constructed in {(performance.now() - timeStart).toFixed(3)}ms
+        Page constructed in {((await getEdgeSafeTime()) - timeStart).toFixed(0)}
+        ms
       </small>
-      <small>Computer move calculated in {computerMoveTime.toFixed(3)}ms</small>
+      <small>Computer move calculated in {computerMoveTime.toFixed(0)}ms</small>
 
       <div className="mt-4">
         <span className="mr-2">CPU Quality:</span>
@@ -275,4 +284,4 @@ export default async function ConnectFourGame(props: {
   );
 }
 
-export const runtime = "nodejs";
+export const runtime = "edge";
