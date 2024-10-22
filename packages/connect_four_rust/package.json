@@ -1,0 +1,16 @@
+{
+  "name": "@connect-four/wasm",
+  "version": "1.0.0",
+  "description": "Connect Four Rust WASM package",
+  "scripts": {
+    "build:wasm": "tsx ./build-wasm.ts",
+    "build:wasm:dev": "tsx wasm-build/build-wasm.ts --dev",
+    "clean": "rimraf ../wasm-build && rimraf ../../apps/web/public/wasm"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.2",
+    "tsx": "^3.12.7",
+    "typescript": "^4.9.5",
+    "wasm-pack": "^0.10.3"
+  }
+}

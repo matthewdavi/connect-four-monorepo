@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-400%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+@keyframes computerSlideDown {
+    0% {
+        transform: translateY(-12000%);
+        opacity: 0;
+    }
+    50% {
+        transform: translateY(-600%);
+        opacity: 100%;
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+@layer utilities {
+    .animate-slide-down {
+        animation: slideDown 0.2s ease-in;
+    }
+
+    .animate-computer-slide-down {
+        animation: computerSlideDown 0.8s ease-in;
+    }
+}

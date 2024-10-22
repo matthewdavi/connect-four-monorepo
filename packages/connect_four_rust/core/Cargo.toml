@@ -1,0 +1,14 @@
+# core/Cargo.toml
+
+[package]
+name = "connect_four_core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+rand = { version = "0.8", features = ["getrandom"] }
+getrandom = { version = "0.2", features = ["js"] }
+
+[lib]
+name = "connect_four_core"

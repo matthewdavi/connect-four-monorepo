@@ -1,0 +1,12 @@
+{
+  "name": "connect_four_wasm",
+  "version": "0.1.0",
+  "files": [
+    "connect_four_wasm_bg.wasm",
+    "connect_four_wasm.js",
+    "connect_four_wasm.d.ts"
+  ],
+  "module": "connect_four_wasm.js",
+  "types": "connect_four_wasm.d.ts",
+  "sideEffects": false
+}

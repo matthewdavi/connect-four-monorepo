@@ -29,7 +29,7 @@ type ExtendedGameState = z.infer<typeof ExtendedGameStateSchema>;
 const baseURL = `${Astro.url.protocol}//${Astro.url.host}`;
 console.log(baseURL);
 // Initialize the WASM module with the base URL
-await ConnectFourWasm.init();
+await ConnectFourWasm.init(baseURL);
 
 // Access the URL search parameters
 

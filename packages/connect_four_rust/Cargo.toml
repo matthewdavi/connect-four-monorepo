@@ -1,0 +1,14 @@
+[workspace]
+members = ["core", "wasm", "server"]
+
+[profile.release]
+lto = true
+opt-level = 's'
+
+[package]
+name = "connect_four_rust"
+version = "0.1.0"
+edition = "2021"
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
