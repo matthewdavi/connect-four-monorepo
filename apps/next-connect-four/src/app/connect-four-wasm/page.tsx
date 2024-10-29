@@ -10,6 +10,7 @@ import { z } from "zod";
 import { memoize } from "lodash-es";
 import { headers } from "next/headers";
 import { cache } from "react";
+import { EdgeTimer } from "~/EdgeTimer";
 
 const CellSchema = z.union([
   z.literal("Empty"),
@@ -28,29 +29,6 @@ const ExtendedGameStateSchema = GameStateSchema.extend({
   newestComputerPieceColumn: z.number().nullable(),
   minimaxQuality: z.enum(["bad", "medium", "best"]),
 });
-
-async function getEdgeSafeTime() {
-  try {
-    const time = Date.now();
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
-
-    void fetch(`${baseUrl}/api/time?time=${time}`, {
-      cache: "no-store",
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    });
-
-    return time;
-  } catch (error) {
-    console.error("Error in getEdgeSafeTime:", error);
-    return Date.now();
-  }
-}
 
 function convertWasmStateToTypescriptState(wasmState: ExtendedGameState) {
   return {
@@ -81,7 +59,7 @@ const getConnectFour = cache(async (baseUrl: string) => {
 async function ConnectFourGame(props: {
   searchParams: Promise<{ state?: string }>;
 }) {
-  const timeStart = await getEdgeSafeTime();
+  await EdgeTimer.timeStart("page");
 
   const searchParams = await props.searchParams;
 
@@ -90,11 +68,9 @@ async function ConnectFourGame(props: {
   const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
   const baseUrl = `${protocol}://${host}`;
 
-  const startLoadingWasm = await getEdgeSafeTime();
+  await EdgeTimer.timeStart("load wasm");
   const connectFour = await getConnectFour(baseUrl);
-  const wasmLoadTime = ((await getEdgeSafeTime()) - startLoadingWasm).toFixed(
-    2,
-  );
+  const wasmLoadTime = await EdgeTimer.timeEnd("load wasm");
 
   if (!connectFour) {
     throw new Error("ConnectFourWasm module not initialized");
@@ -127,12 +103,12 @@ async function ConnectFourGame(props: {
   let computerMoveTime = 0;
   // Compute the computer's move if it's the computer's turn
   if (!gameState.is_game_over && gameState.current_player === "Yellow") {
-    const startComputerMove = await getEdgeSafeTime();
+    await EdgeTimer.timeStart("computer move");
     const computerMove = connectFour.get_computer_move(
       gameState,
       gameState.minimaxQuality,
     );
-    computerMoveTime = (await getEdgeSafeTime()) - startComputerMove;
+    computerMoveTime = await EdgeTimer.timeEnd("computer move");
 
     const computerState = connectFour.place_piece(gameState, computerMove);
     gameState = {
@@ -280,8 +256,7 @@ async function ConnectFourGame(props: {
     );
   }
 
-  const endTime = await getEdgeSafeTime();
-  const totalTime = endTime - timeStart;
+  const totalTime = await EdgeTimer.timeEnd("page");
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100">

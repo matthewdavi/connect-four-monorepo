@@ -9,35 +9,13 @@ import Link from "next/link";
 import JSONCrush from "jsoncrush";
 import { z } from "zod";
 import { memoize } from "lodash-es";
+import { EdgeTimer } from "~/EdgeTimer";
 
 const ExtendedGameStateSchema = GameStateSchema.extend({
   newestPieceColumn: z.number().nullable(),
   newestComputerPieceColumn: z.number().nullable(),
   minimaxQuality: QualitySchema,
 });
-
-async function getEdgeSafeTime() {
-  try {
-    const time = Date.now();
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
-
-    void fetch(`${baseUrl}/api/time?time=${time}`, {
-      cache: "no-store",
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    });
-
-    return time;
-  } catch (error) {
-    console.error("Error in getEdgeSafeTime:", error);
-    return Date.now();
-  }
-}
 
 type ExtendedGameState = z.infer<typeof ExtendedGameStateSchema>;
 
@@ -71,7 +49,7 @@ function convertTsToWasmGameState(tsState: ExtendedGameState) {
 export default async function ConnectFourGame(props: {
   searchParams: Promise<{ state?: string }>;
 }) {
-  const timeStart = await getEdgeSafeTime();
+  await EdgeTimer.timeStart("page");
   const searchParams = await props.searchParams;
   const initialState: ExtendedGameState = {
     ...ConnectFour.createInitialState(),
@@ -99,12 +77,12 @@ export default async function ConnectFourGame(props: {
   // Compute the computer's move if it's the computer's turn
   let computerMoveTime = 0;
   if (!gameState.isGameOver && gameState.currentPlayer === "yellow") {
-    const computerMoveStart = await getEdgeSafeTime();
+    await EdgeTimer.timeStart("computer move");
     const computerMove = ConnectFour.getComputerMove(
       gameState,
       gameState.minimaxQuality,
     );
-    computerMoveTime = (await getEdgeSafeTime()) - computerMoveStart;
+    computerMoveTime = await EdgeTimer.timeEnd("computer move");
     const computerState: GameState = ConnectFour.placePiece(
       gameState,
       computerMove,
@@ -277,7 +255,7 @@ export default async function ConnectFourGame(props: {
         </div>
       )}
       <small>
-        Page constructed in {((await getEdgeSafeTime()) - timeStart).toFixed(0)}
+        Page constructed in {(await EdgeTimer.timeEnd("page")).toFixed(0)}
         ms
       </small>
       <small>Computer move calculated in {computerMoveTime.toFixed(0)}ms</small>
