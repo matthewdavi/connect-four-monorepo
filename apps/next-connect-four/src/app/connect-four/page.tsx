@@ -9,7 +9,6 @@ import Link from "next/link";
 import JSONCrush from "jsoncrush";
 import { z } from "zod";
 import { memoize } from "lodash-es";
-import { EdgeTimer } from "~/EdgeTimer";
 
 const ExtendedGameStateSchema = GameStateSchema.extend({
   newestPieceColumn: z.number().nullable(),
@@ -49,7 +48,6 @@ function convertTsToWasmGameState(tsState: ExtendedGameState) {
 export default async function ConnectFourGame(props: {
   searchParams: Promise<{ state?: string }>;
 }) {
-  await EdgeTimer.timeStart("page");
   const searchParams = await props.searchParams;
   const initialState: ExtendedGameState = {
     ...ConnectFour.createInitialState(),
