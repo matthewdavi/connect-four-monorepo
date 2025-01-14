@@ -4,7 +4,7 @@ import initWasm, {
   ConnectFour,
   InitInput,
   type InitOutput,
-} from "./wasm-build/connect_four_wasm";
+} from "./wasm-build/connect_four_wasm.js";
 
 export type GameStateJS = any;
 
