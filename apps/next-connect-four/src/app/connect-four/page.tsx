@@ -226,18 +226,20 @@ export default async function ConnectFourGame(props: {
   return (
     <>
       <head>
-        {board.map((_, colIndex) => {
-          const compressedState = JSONCrush.crush(
-            JSON.stringify(getNextState(colIndex)),
-          );
-          return (
-            <link
-              key={colIndex}
-              rel="prefetch"
-              href={`/connect-four?state=${compressedState}`}
-            />
-          );
-        })}
+        {board
+          .filter((_, index) => index === 3)
+          .map((_, colIndex) => {
+            const compressedState = JSONCrush.crush(
+              JSON.stringify(getNextState(colIndex)),
+            );
+            return (
+              <link
+                key={colIndex}
+                rel="prefetch"
+                href={`/connect-four?state=${compressedState}`}
+              />
+            );
+          })}
       </head>
       <body>
         <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100">
