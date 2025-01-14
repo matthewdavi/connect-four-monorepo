@@ -238,10 +238,17 @@ function generatePrefetchLinks() {
     return `<link rel="prefetch" href="${url}">`;
   }).join("\n");
 }
+Astro.response.headers.set(
+  "Cache-Control",
+  "public, max-age=31536000, s-maxage=31536000, stale-while-revalidate=86400, immutable"
+);
+Astro.response.headers.set("Vary", "Accept, Accept-Encoding, Search");
 ---
 
 <Layout title="Connect Four">
-  <Fragment slot="head"> </Fragment>
+  <Fragment slot="head">
+    <Fragment set:html={generatePrefetchLinks()} />
+  </Fragment>
 
   <div
     class="flex min-h-screen flex-col items-center justify-center bg-gray-100"
