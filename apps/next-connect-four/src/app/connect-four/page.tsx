@@ -74,15 +74,12 @@ export default async function ConnectFourGame(props: {
     gameState = initialState;
   }
 
-  // Compute the computer's move if it's the computer's turn
-  let computerMoveTime = 0;
   if (!gameState.isGameOver && gameState.currentPlayer === "yellow") {
-    await EdgeTimer.timeStart("computer move");
     const computerMove = ConnectFour.getComputerMove(
       gameState,
       gameState.minimaxQuality,
     );
-    computerMoveTime = await EdgeTimer.timeEnd("computer move");
+
     const computerState: GameState = ConnectFour.placePiece(
       gameState,
       computerMove,
@@ -165,7 +162,7 @@ export default async function ConnectFourGame(props: {
       const nextState = getNextState(colIndex);
       const compressedState = JSONCrush.crush(JSON.stringify(nextState));
       return (
-        <Link href={`/connect-four?state=${compressedState}`}>
+        <Link href={`/connect-four?state=${compressedState}`} prefetch>
           <div className="relative h-12 w-12 cursor-pointer rounded-full">
             <div className="absolute inset-0 rounded-full bg-white"></div>
             {cellContent}
@@ -229,51 +226,64 @@ export default async function ConnectFourGame(props: {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100">
-      <h1 className="mb-8 text-4xl font-bold">Connect Four</h1>
-      <div className="rounded-lg bg-blue-500 p-4">
-        <div className="grid grid-cols-7 gap-1">
-          {board.map((column, colIndex) => (
-            <div key={colIndex} className="flex flex-col hover:opacity-50">
-              {column.map((cell, rowIndex) => (
-                <div key={`${colIndex}-${rowIndex}`}>
-                  {renderCell(cell, 5 - rowIndex, colIndex)}
+    <>
+      <head>
+        {board.map((_, colIndex) => {
+          const compressedState = JSONCrush.crush(
+            JSON.stringify(getNextState(colIndex)),
+          );
+          return (
+            <link
+              key={colIndex}
+              rel="prefetch"
+              href={`/connect-four?state=${compressedState}`}
+            />
+          );
+        })}
+      </head>
+      <body>
+        <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100">
+          <h1 className="mb-8 text-4xl font-bold">Connect Four</h1>
+          <div className="rounded-lg bg-blue-500 p-4">
+            <div className="grid grid-cols-7 gap-1">
+              {board.map((column, colIndex) => (
+                <div key={colIndex} className="flex flex-col hover:opacity-50">
+                  {column.map((cell, rowIndex) => (
+                    <div key={`${colIndex}-${rowIndex}`}>
+                      {renderCell(cell, 5 - rowIndex, colIndex)}
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
-          ))}
-        </div>
-      </div>
-      {isGameOver && (
-        <div className="mt-4 text-xl font-semibold">
-          {winner ? `${winner.toUpperCase()} wins!` : "It's a draw!"}
-        </div>
-      )}
-      {!isGameOver && (
-        <div className="mt-4 text-xl font-semibold">
-          Current player: {currentPlayer.toUpperCase()}
-        </div>
-      )}
-      <small>
-        Page constructed in {(await EdgeTimer.timeEnd("page")).toFixed(0)}
-        ms
-      </small>
-      <small>Computer move calculated in {computerMoveTime.toFixed(0)}ms</small>
+          </div>
+          {isGameOver && (
+            <div className="mt-4 text-xl font-semibold">
+              {winner ? `${winner.toUpperCase()} wins!` : "It's a draw!"}
+            </div>
+          )}
+          {!isGameOver && (
+            <div className="mt-4 text-xl font-semibold">
+              Current player: {currentPlayer.toUpperCase()}
+            </div>
+          )}
 
-      <div className="mt-4">
-        <span className="mr-2">CPU Quality:</span>
-        {renderQualityLink("bad")}
-        {renderQualityLink("medium")}
-        {renderQualityLink("best")}
-      </div>
-      {renderEngineToggle()}
-      <Link
-        href="/connect-four"
-        className="mt-8 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-      >
-        New Game
-      </Link>
-    </div>
+          <div className="mt-4">
+            <span className="mr-2">CPU Quality:</span>
+            {renderQualityLink("bad")}
+            {renderQualityLink("medium")}
+            {renderQualityLink("best")}
+          </div>
+          {renderEngineToggle()}
+          <Link
+            href="/connect-four"
+            className="mt-8 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+          >
+            New Game
+          </Link>
+        </div>
+      </body>
+    </>
   );
 }
 
