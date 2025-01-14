@@ -2,12 +2,12 @@
   "name": "connect-four-monorepo",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "bun@1.1.44",
+  "packageManager": "bun@1.1.43",
   "scripts": {
-    "dev": "pnpm --filter next-connect-four dev",
-    "build": "pnpm --filter next-connect-four build",
-    "start": "pnpm --filter next-connect-four start",
-    "lint": "pnpm --filter next-connect-four lint"
+    "dev": "bun --filter next-connect-four dev",
+    "build": "bun --filter next-connect-four build",
+    "start": "bun --filter next-connect-four start",
+    "lint": "bun --filter next-connect-four lint"
   },
   "devDependencies": {
     "typescript": "^5.6.3"
