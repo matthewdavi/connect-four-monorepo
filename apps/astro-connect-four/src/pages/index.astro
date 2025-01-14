@@ -1,46 +1,32 @@
 ---
-import { ConnectFourWasm } from "@connect-four/wasm";
+import {
+  ConnectFour,
+  type GameState,
+  type Color,
+  GameStateSchema,
+  QualitySchema,
+} from "@connect-four/utils/src/ConnectFour";
 import JSONCrush from "jsoncrush";
 import { z } from "zod";
 import { memoize } from "lodash-es";
-import Layout from "../../layouts/Layout.astro";
-
-// Define your Zod schemas
-const CellSchema = z.union([
-  z.literal("Empty"),
-  z.object({ Filled: z.enum(["Red", "Yellow"]) }),
-]);
-
-const GameStateSchema = z.object({
-  board: z.array(z.array(CellSchema)),
-  current_player: z.enum(["Red", "Yellow"]),
-  is_game_over: z.boolean(),
-  winner: z.enum(["Red", "Yellow"]).nullable().optional(),
-});
+import Layout from "../layouts/Layout.astro";
 
 const ExtendedGameStateSchema = GameStateSchema.extend({
   newestPieceColumn: z.number().nullable(),
   newestComputerPieceColumn: z.number().nullable(),
-  minimaxQuality: z.enum(["bad", "medium", "best"]),
+  minimaxQuality: QualitySchema,
 });
 
 type ExtendedGameState = z.infer<typeof ExtendedGameStateSchema>;
 
-// Define the base URL
-const baseURL = `${Astro.url.protocol}//${Astro.url.host}`;
-console.log(baseURL);
-// Initialize the WASM module with the base URL
-await ConnectFourWasm.init(baseURL);
-
-// Access the URL search parameters
-
+// Get URL params
 const stateParam = Astro.url.searchParams.get("state");
 
 // Measure computation time
 const timeStart = Date.now();
 
 const initialState: ExtendedGameState = {
-  ...ConnectFourWasm.create_initial_state(),
+  ...ConnectFour.createInitialState(),
   newestPieceColumn: null,
   newestComputerPieceColumn: null,
   minimaxQuality: "best",
@@ -51,7 +37,6 @@ let gameState: ExtendedGameState;
 try {
   if (stateParam) {
     const parsedState = JSON.parse(JSONCrush.uncrush(stateParam)) as unknown;
-
     gameState = ExtendedGameStateSchema.parse(parsedState);
   } else {
     gameState = initialState;
@@ -64,13 +49,16 @@ try {
 // Compute the computer's move if it's the computer's turn
 const moveStart = Date.now();
 let moveComputedIn = 0;
-if (!gameState.is_game_over && gameState.current_player === "Yellow") {
-  const computerMove = ConnectFourWasm.get_computer_move(
+if (!gameState.isGameOver && gameState.currentPlayer === "yellow") {
+  const computerMove = ConnectFour.getComputerMove(
     gameState,
     gameState.minimaxQuality
   );
   moveComputedIn = Date.now() - moveStart;
-  const computerState = ConnectFourWasm.place_piece(gameState, computerMove);
+  const computerState: GameState = ConnectFour.placePiece(
+    gameState,
+    computerMove
+  );
   gameState = {
     ...computerState,
     newestPieceColumn: gameState.newestPieceColumn,
@@ -81,44 +69,52 @@ if (!gameState.is_game_over && gameState.current_player === "Yellow") {
 
 const {
   board,
-  current_player,
-  is_game_over,
+  currentPlayer,
+  isGameOver,
   winner,
   newestPieceColumn,
   newestComputerPieceColumn,
 } = gameState;
 
+function getGameStateHash(state: ExtendedGameState): string {
+  const str = JSON.stringify(state.board);
+  return str
+    .split("")
+    .reduce((hash, char) => {
+      return ((hash << 5) - hash + char.charCodeAt(0)) | 0;
+    }, 0)
+    .toString(16)
+    .slice(0, 6);
+}
+
 const getNextState = memoize((column: number): ExtendedGameState => {
-  if (is_game_over) return gameState;
+  if (isGameOver) return gameState;
+  const stateHash = getGameStateHash(gameState);
 
   // Player's move (red)
-  const playerState = ConnectFourWasm.place_piece(gameState, column);
+  const playerState: GameState = ConnectFour.placePiece(gameState, column);
   const playerExtendedState: ExtendedGameState = {
     ...playerState,
     minimaxQuality: gameState.minimaxQuality,
     newestPieceColumn: column,
-    newestComputerPieceColumn: null, // Reset the computer's newest piece
+    newestComputerPieceColumn: null,
   };
 
   return playerExtendedState;
 });
 
-function renderCell(
-  cell: z.infer<typeof CellSchema>,
-  rowIndex: number,
-  colIndex: number
-) {
+function renderCell(cell: Color | null, rowIndex: number, colIndex: number) {
   const cellColor =
-    cell === "Empty"
-      ? "bg-white"
-      : cell.Filled === "Red"
-        ? "bg-red-500"
-        : "bg-yellow-500";
+    cell === "red"
+      ? "bg-red-500"
+      : cell === "yellow"
+        ? "bg-yellow-500"
+        : "bg-white";
 
   let animationClass = "";
   if (newestPieceColumn != null) {
     const pieceRow = board[newestPieceColumn]?.findIndex(
-      (cell) => cell !== "Empty"
+      (cell) => cell !== null
     );
     if (pieceRow != null) {
       const isNewColumn = colIndex === newestPieceColumn;
@@ -131,7 +127,7 @@ function renderCell(
 
   if (newestComputerPieceColumn != null) {
     const computerPieceRow = board[newestComputerPieceColumn]?.findIndex(
-      (cell) => cell !== "Empty"
+      (cell) => cell !== null
     );
     if (computerPieceRow != null) {
       const isNewComputerColumn = colIndex === newestComputerPieceColumn;
@@ -145,12 +141,11 @@ function renderCell(
 
   const cellContent = `<div class="absolute inset-0 rounded-full border-2 border-gray-300 ${cellColor} ${animationClass}"></div>`;
 
-  if (cell === "Empty" && !is_game_over) {
+  if (cell === null && !isGameOver) {
     const nextState = getNextState(colIndex);
     const compressedState = JSONCrush.crush(JSON.stringify(nextState));
-    const href = `/connect-four-wasm?state=${encodeURIComponent(compressedState)}`;
     return `
-      <a href="${href}">
+      <a href="/?state=${encodeURIComponent(compressedState)}">
         <div class="relative h-12 w-12 cursor-pointer rounded-full">
           <div class="absolute inset-0 rounded-full bg-white"></div>
           ${cellContent}
@@ -174,54 +169,59 @@ function renderQualityLink(quality: "bad" | "medium" | "best") {
   };
   const compressedState = JSONCrush.crush(JSON.stringify(newState));
   const isActive = gameState.minimaxQuality === quality;
-  const href = `/connect-four-wasm?state=${encodeURIComponent(compressedState)}`;
 
   const className = isActive
     ? "bg-blue-500 text-white"
     : "bg-white text-blue-500 hover:bg-blue-100";
 
   return `
-    <a href="${href}" class="mx-1 rounded px-3 py-1 text-sm font-medium ${className}">
+    <a href="/?state=${encodeURIComponent(compressedState)}" 
+       class="mx-1 rounded px-3 py-1 text-sm font-medium ${className}">
       ${quality.charAt(0).toUpperCase() + quality.slice(1)}
     </a>
   `;
 }
 
 function renderEngineToggle() {
-  // Convert WASM state back to TypeScript format
-  const tsState = {
+  const wasmState = {
     board: gameState.board.map((column) =>
       column.map((cell) =>
-        cell === "Empty"
-          ? null
-          : (cell.Filled.toLowerCase() as "red" | "yellow")
+        cell === null
+          ? "Empty"
+          : {
+              Filled: (cell.charAt(0).toUpperCase() + cell.slice(1)) as
+                | "Red"
+                | "Yellow",
+            }
       )
     ),
-    currentPlayer: gameState.current_player.toLowerCase() as "red" | "yellow",
-    isGameOver: gameState.is_game_over,
+    current_player: (gameState.currentPlayer.charAt(0).toUpperCase() +
+      gameState.currentPlayer.slice(1)) as "Red" | "Yellow",
+    is_game_over: gameState.isGameOver,
     winner: gameState.winner
-      ? (gameState.winner.toLowerCase() as "red" | "yellow")
+      ? ((gameState.winner.charAt(0).toUpperCase() +
+          gameState.winner.slice(1)) as "Red" | "Yellow")
       : null,
     newestPieceColumn: gameState.newestPieceColumn,
     newestComputerPieceColumn: gameState.newestComputerPieceColumn,
     minimaxQuality: gameState.minimaxQuality,
   };
 
-  const compressedTsState = JSONCrush.crush(JSON.stringify(tsState));
-  const compressedWasmState = JSONCrush.crush(JSON.stringify(gameState));
+  const compressedTsState = JSONCrush.crush(JSON.stringify(gameState));
+  const compressedWasmState = JSONCrush.crush(JSON.stringify(wasmState));
 
   return `
     <div class="mt-4 flex items-center">
       <span class="mr-2">Engine:</span>
       <a
         href="/?state=${encodeURIComponent(compressedTsState)}"
-        class="mx-1 rounded bg-white px-3 py-1 text-sm font-medium text-blue-500 hover:bg-blue-100"
+        class="mx-1 rounded bg-blue-500 px-3 py-1 text-sm font-medium text-white"
       >
         TypeScript
       </a>
       <a
         href="/connect-four-wasm?state=${encodeURIComponent(compressedWasmState)}"
-        class="mx-1 rounded bg-blue-500 px-3 py-1 text-sm font-medium text-white"
+        class="mx-1 rounded bg-white px-3 py-1 text-sm font-medium text-blue-500 hover:bg-blue-100"
       >
         WASM
       </a>
@@ -230,27 +230,26 @@ function renderEngineToggle() {
 }
 
 function generatePrefetchLinks() {
-  if (is_game_over) return "";
+  if (isGameOver) return "";
 
   return Array.from({ length: 7 }, (_, colIndex) => {
     const nextState = getNextState(colIndex);
     const compressedState = JSONCrush.crush(JSON.stringify(nextState));
-    const url = `/connect-four-wasm?state=${encodeURIComponent(compressedState)}`;
+    const url = `/?state=${encodeURIComponent(compressedState)}`;
     return `<link rel="prefetch" href="${url}">`;
   }).join("\n");
 }
 ---
 
-<Layout title="Connect Four (WASM)">
+<Layout title="Connect Four">
   <Fragment slot="head">
     <Fragment set:html={generatePrefetchLinks()} />
   </Fragment>
 
-  <!-- HTML Template -->
   <div
     class="flex min-h-screen flex-col items-center justify-center bg-gray-100"
   >
-    <h1 class="mb-8 text-4xl font-bold">Connect Four (WASM)</h1>
+    <h1 class="mb-8 text-4xl font-bold">Connect Four</h1>
     <div class="rounded-lg bg-blue-500 p-4">
       <div class="grid grid-cols-7 gap-1">
         {
@@ -265,16 +264,16 @@ function generatePrefetchLinks() {
       </div>
     </div>
     {
-      is_game_over && (
+      isGameOver && (
         <div class="mt-4 text-xl font-semibold">
           {winner ? `${winner.toUpperCase()} wins!` : "It's a draw!"}
         </div>
       )
     }
     {
-      !is_game_over && (
+      !isGameOver && (
         <div class="mt-4 text-xl font-semibold">
-          Current player: {current_player.toUpperCase()}
+          Current player: {currentPlayer.toUpperCase()}
         </div>
       )
     }
@@ -288,7 +287,7 @@ function generatePrefetchLinks() {
     </div>
     <Fragment set:html={renderEngineToggle()} />
     <a
-      href="/connect-four-wasm"
+      href="/"
       class="mt-8 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
     >
       New Game
@@ -299,12 +298,10 @@ function generatePrefetchLinks() {
     @tailwind base;
     @tailwind components;
     @tailwind utilities;
-
     @keyframes slideDown {
       from {
         transform: translateY(-400%);
       }
-
       to {
         transform: translateY(0);
       }

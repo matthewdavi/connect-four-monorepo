@@ -4,7 +4,7 @@ import tailwind from "@astrojs/tailwind";
 import { fileURLToPath } from "url";
 import path from "path";
 
-import vercel from "@astrojs/vercel/serverless";
+import cloudflare from "@astrojs/cloudflare";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,5 +47,5 @@ export default defineConfig({
     ],
   },
 
-  adapter: vercel(),
+  adapter: cloudflare(),
 });

@@ -15,6 +15,7 @@ const { title } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    <slot name="head" />
   </head>
   <body>
     <slot />
@@ -48,3 +49,24 @@ const { title } = Astro.props;
       monospace;
   }
 </style>
+
+<script>
+  // Only apply mousedown navigation on non-touch devices
+  if (!("ontouchstart" in window)) {
+    document.addEventListener("mousedown", (e) => {
+      const target = e.target as HTMLElement;
+      const link = target.closest("a");
+
+      if (
+        link &&
+        link.href &&
+        !link.hasAttribute("download") &&
+        link.protocol === window.location.protocol &&
+        link.hostname === window.location.hostname
+      ) {
+        e.preventDefault();
+        link.click();
+      }
+    });
+  }
+</script>
