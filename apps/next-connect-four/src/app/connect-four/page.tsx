@@ -160,7 +160,7 @@ export default async function ConnectFourGame(props: {
       const nextState = getNextState(colIndex);
       const compressedState = JSONCrush.crush(JSON.stringify(nextState));
       return (
-        <Link href={`/connect-four?state=${compressedState}`} prefetch>
+        <Link href={`/connect-four?state=${compressedState}`}>
           <div className="relative h-12 w-12 cursor-pointer rounded-full">
             <div className="absolute inset-0 rounded-full bg-white"></div>
             {cellContent}
