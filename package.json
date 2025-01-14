@@ -2,6 +2,7 @@
   "name": "connect-four-monorepo",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "bun@1.1.44",
   "scripts": {
     "dev": "pnpm --filter next-connect-four dev",
     "build": "pnpm --filter next-connect-four build",

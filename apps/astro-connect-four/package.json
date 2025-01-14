@@ -2,6 +2,7 @@
   "name": "astro-connect-four",
   "type": "module",
   "version": "0.0.1",
+  "packageManager": "bun@1.1.44",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
