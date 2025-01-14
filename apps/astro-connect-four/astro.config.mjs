@@ -49,8 +49,5 @@ export default defineConfig({
       },
     ],
   },
-  adapter: cloudflare({
-    functionPerRoute: true,
-    assets: "assets",
-  }),
+  adapter: cloudflare({}),
 });
