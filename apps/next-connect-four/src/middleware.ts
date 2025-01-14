@@ -12,7 +12,7 @@ export function middleware(request: NextRequest) {
   // stale-while-revalidate allows serving stale content while fetching fresh content
   response.headers.set(
     "Cache-Control",
-    "public, s-maxage=600, stale-while-revalidate=600, max-age=600",
+    "public, must-revalidate, immutable, s-maxage=600, stale-while-revalidate=600, max-age=600",
   );
 
   // Add cache key based on search params
