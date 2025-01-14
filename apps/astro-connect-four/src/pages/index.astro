@@ -89,7 +89,6 @@ function getGameStateHash(state: ExtendedGameState): string {
 
 const getNextState = memoize((column: number): ExtendedGameState => {
   if (isGameOver) return gameState;
-  const stateHash = getGameStateHash(gameState);
 
   // Player's move (red)
   const playerState: GameState = ConnectFour.placePiece(gameState, column);

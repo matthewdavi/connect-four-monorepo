@@ -19,7 +19,10 @@ export default defineConfig({
       target: "esnext",
     },
     optimizeDeps: {
-      exclude: ["@connect-four/connect-four-rust"],
+      exclude: [
+        "@connect-four/connect-four-rust",
+        "../../../../../packages/connect_four_rust/index",
+      ],
     },
     assetsInclude: ["**/*.wasm"],
     server: {
@@ -47,7 +50,6 @@ export default defineConfig({
     ],
   },
   adapter: cloudflare({
-    mode: "directory",
     functionPerRoute: true,
     assets: "assets",
   }),
