@@ -10,7 +10,6 @@ import { z } from "zod";
 import { memoize } from "lodash-es";
 import { headers } from "next/headers";
 import { cache } from "react";
-import { EdgeTimer } from "~/EdgeTimer";
 
 const CellSchema = z.union([
   z.literal("Empty"),
@@ -59,8 +58,6 @@ const getConnectFour = cache(async (baseUrl: string) => {
 async function ConnectFourGame(props: {
   searchParams: Promise<{ state?: string }>;
 }) {
-  await EdgeTimer.timeStart("page");
-
   const searchParams = await props.searchParams;
 
   const headersList = await headers();
@@ -68,9 +65,7 @@ async function ConnectFourGame(props: {
   const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
   const baseUrl = `${protocol}://${host}`;
 
-  await EdgeTimer.timeStart("load wasm");
   const connectFour = await getConnectFour(baseUrl);
-  const wasmLoadTime = await EdgeTimer.timeEnd("load wasm");
 
   if (!connectFour) {
     throw new Error("ConnectFourWasm module not initialized");
@@ -100,15 +95,12 @@ async function ConnectFourGame(props: {
     gameState = initialState;
   }
 
-  let computerMoveTime = 0;
   // Compute the computer's move if it's the computer's turn
   if (!gameState.is_game_over && gameState.current_player === "Yellow") {
-    await EdgeTimer.timeStart("computer move");
     const computerMove = connectFour.get_computer_move(
       gameState,
       gameState.minimaxQuality,
     );
-    computerMoveTime = await EdgeTimer.timeEnd("computer move");
 
     const computerState = connectFour.place_piece(gameState, computerMove);
     gameState = {
@@ -256,8 +248,6 @@ async function ConnectFourGame(props: {
     );
   }
 
-  const totalTime = await EdgeTimer.timeEnd("page");
-
   return (
     <body>
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100">
@@ -285,11 +275,7 @@ async function ConnectFourGame(props: {
             Current player: {current_player.toUpperCase()}
           </div>
         )}
-        <small>Page constructed in {totalTime.toFixed(0)}ms</small>
-        <small>
-          Computer move calculated in {computerMoveTime.toFixed(0)}ms
-        </small>
-        <small>Wasm load time: {wasmLoadTime}ms</small>
+
         <div className="mt-4">
           <span className="mr-2">CPU Quality:</span>
           {renderQualityLink("bad")}
